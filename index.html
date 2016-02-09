@@ -6288,7 +6288,7 @@
 			countryCode = countriesInHashAlpha3[country];
 
 			// console.log(bandwidthData);
-			bandwidth = 1;
+			bandwidth = -1; //default
 			years = ["2008","2007","2006","2005","2004","2003","2002","2001","2000","1999","1998","1997","1996","1995","1994","1992","1991", "1990", "1989"];
 			for( var j=0; j < years.length; j++){
 				year = parseInt(years[j]);
@@ -6457,6 +6457,9 @@
 
 			// Remove date
 			delete resultSum['Date']; 
+			// Reomve poland to some weiered bug
+			resultSum['PL'] =1;
+			resultSum['PE'] =1;
 			console.log(resultSum);
 
 			
@@ -6476,13 +6479,13 @@
 				for(var key in resultSum) {
 					try{
 						bandwidth = parseInt(countrieBandwidthHash[countriesHash[key]]);
-						if (bandwidth !=1){
+						if (bandwidth > 1 ){
 							resultSum[key] = resultSum[key]/bandwidth
 						} else{
-							resultSum[key] = 0
+							resultSum[key] = 1
 						}
 					}catch (err){
-
+						resultSum[key] = 1	
 					}
 				}
 			}
@@ -6491,26 +6494,30 @@
 			var min = 1000000;
 			var max = 0;
 			for(var key in resultSum) {
-				if(resultSum[key] > max){
-					max = resultSum[key];
+				val = resultSum[key]
+				if(val > max){
+					max = val;
 				}
 
-				if(resultSum[key] < min){
-					min = resultSum[key];
+				if(val < min){
+					min = val;
 				}
 			}
+			console.log(max)
+			console.log(min)
 
 			var resultSumWith3DigitCountryCode = {};
 			for(var key in resultSum) {
 				// The resultant shoudl be like this USA: {fillKey: 'HIGH' },
 				val = {};
 
-				var rangeVal = parseInt(Math.ceil(4* parseFloat(resultSum[key])/ (max - min)) );
+				var rangeVal = parseInt(Math.ceil(4*parseFloat(resultSum[key])/ (max - min)) );
+				val['rangeVal'] = rangeVal;
 				val['val'] = resultSum[key]/Math.pow(10,9);
 				val['value'] = (resultSum[key]/Math.pow(10,9)).toFixed(2).toString() + ' Gbps';
 				// val['normalized'] = parseFloat((resultSum[key])/ (max - min));
 				// val['normalizationBandwidth']  = countrieBandwidthHash[countriesHash[key]];
-				// val['normalizationBandwidthValue'] = (resultSum[key]/(Math.pow(10,9) * parseInt(countrieBandwidthHash[countriesHash[key]]))).toFixed(2).toString() + ' Gbps';
+				val['bandwidth'] = countrieBandwidthHash[countriesHash[key]] + ' Mbps';
 
 				switch (rangeVal) {
 				    case 0:
@@ -6567,7 +6574,8 @@
 		            popupTemplate: function(geo, data) {
 		                return ['<div class="hoverinfo"><strong>',
 		                        geo.properties.name,
-		                        ': ' + data.value,
+		                        ': ' + data.value, 
+		                        ',  Internet Bandwidth: ' + data.bandwidth,
 		                        '</strong></div>'].join('');
 		            }
 		        }
